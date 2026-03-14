@@ -1,6 +1,35 @@
 class Restaurant {
-  const Restaurant({required this.id, required this.name});
-
-  final String id;
+  final int? id;
   final String name;
+  final String price;
+  final double distance;
+  final String hours;
+
+  Restaurant ({
+    this.id,
+    required this.name,
+    required this.price,
+    required this.distance,
+    required this.hours,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'price': price,
+      'distance': distance,
+      'hours': hours,
+    };
+  }
+
+  factory Restaurant.fromMap(Map<String, dynamic>map) {
+    return Restaurant(
+      id: map['id'],
+      name: map['name'],
+      price: map['price'],
+      distance: map['distance'],
+      hours: map['hours'],
+    );
+  }
 }
