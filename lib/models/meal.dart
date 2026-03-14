@@ -5,7 +5,7 @@ class Meal {
   final double price;
   final String date;
 
-  Meal ({
+  Meal({
     this.id,
     required this.mealName,
     required this.restaurantName,
@@ -23,13 +23,13 @@ class Meal {
     };
   }
 
-  factory Map.fromMap(Map<String, dynamic> map) {
-   return Meal(
-      id: map['id'],
-      mealName: map['mealName'],
-      restaurantName: map['restaurantName'],
-      price: map['price'],
-      date: map['date'],
-    ); 
+  factory Meal.fromMap(Map<String, dynamic> map) {
+    return Meal(
+      id: map['id'] as int?,
+      mealName: map['mealName'] as String,
+      restaurantName: map['restaurantName'] as String,
+      price: (map['price'] as num).toDouble(),
+      date: map['date'] as String,
+    );
   }
 }
