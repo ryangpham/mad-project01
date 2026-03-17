@@ -34,7 +34,12 @@ class DatabaseHelper {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, _databaseName);
 
-    return openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
+    return openDatabase(
+      path,
+      version: _databaseVersion,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -59,6 +64,8 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+
   Future<int> insertMeal(Meal meal) async {
     final db = await database;
     return db.insert(mealsTable, meal.toMap());
@@ -71,6 +78,21 @@ class DatabaseHelper {
     return maps.map(Meal.fromMap).toList();
   }
 
+  Future<int> updateMeal(Meal meal) async {
+    final db = await database;
+    return db.update(
+      mealsTable,
+      meal.toMap(),
+      where: 'id = ?',
+      whereArgs: [meal.id],
+    );
+  }
+
+  Future<int> deleteMeal(int id) async {
+    final db = await database;
+    return db.delete(mealsTable, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int> addFavorite(Restaurant restaurant) async {
     final db = await database;
     return db.insert(favoritesTable, restaurant.toMap());
@@ -81,5 +103,20 @@ class DatabaseHelper {
     final maps = await db.query(favoritesTable, orderBy: 'id DESC');
 
     return maps.map(Restaurant.fromMap).toList();
+  }
+
+  Future<int> updateFavorite(Restaurant restaurant) async {
+    final db = await database;
+    return db.update(
+      favoritesTable,
+      restaurant.toMap(),
+      where: 'id = ?',
+      whereArgs: [restaurant.id],
+    );
+  }
+
+  Future<int> removeFavorite(int id) async {
+    final db = await database;
+    return db.delete(favoritesTable, where: 'id = ?', whereArgs: [id]);
   }
 }
