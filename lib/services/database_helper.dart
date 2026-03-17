@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import '../models/meal.dart';
 import '../models/restaurant.dart';
@@ -31,10 +33,36 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final databasesPath = await getDatabasesPath();
+    final dbFactory = _getDatabaseFactory();
+    final databasesPath = await dbFactory.getDatabasesPath();
     final path = join(databasesPath, _databaseName);
 
-    return openDatabase(path, version: _databaseVersion, onCreate: _onCreate);
+    return dbFactory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: _databaseVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      ),
+    );
+  }
+
+  DatabaseFactory _getDatabaseFactory() {
+    if (kIsWeb) {
+      return databaseFactoryFfiWeb;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+        sqfliteFfiInit();
+        return databaseFactoryFfi;
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return databaseFactory;
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -59,6 +87,8 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+
   Future<int> insertMeal(Meal meal) async {
     final db = await database;
     return db.insert(mealsTable, meal.toMap());
@@ -71,6 +101,21 @@ class DatabaseHelper {
     return maps.map(Meal.fromMap).toList();
   }
 
+  Future<int> updateMeal(Meal meal) async {
+    final db = await database;
+    return db.update(
+      mealsTable,
+      meal.toMap(),
+      where: 'id = ?',
+      whereArgs: [meal.id],
+    );
+  }
+
+  Future<int> deleteMeal(int id) async {
+    final db = await database;
+    return db.delete(mealsTable, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int> addFavorite(Restaurant restaurant) async {
     final db = await database;
     return db.insert(favoritesTable, restaurant.toMap());
@@ -81,5 +126,20 @@ class DatabaseHelper {
     final maps = await db.query(favoritesTable, orderBy: 'id DESC');
 
     return maps.map(Restaurant.fromMap).toList();
+  }
+
+  Future<int> updateFavorite(Restaurant restaurant) async {
+    final db = await database;
+    return db.update(
+      favoritesTable,
+      restaurant.toMap(),
+      where: 'id = ?',
+      whereArgs: [restaurant.id],
+    );
+  }
+
+  Future<int> removeFavorite(int id) async {
+    final db = await database;
+    return db.delete(favoritesTable, where: 'id = ?', whereArgs: [id]);
   }
 }

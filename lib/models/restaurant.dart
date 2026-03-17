@@ -5,7 +5,7 @@ class Restaurant {
   final double distance;
   final String hours;
 
-  Restaurant ({
+  Restaurant({
     this.id,
     required this.name,
     required this.price,
@@ -23,13 +23,13 @@ class Restaurant {
     };
   }
 
-  factory Restaurant.fromMap(Map<String, dynamic>map) {
+  factory Restaurant.fromMap(Map<String, dynamic> map) {
     return Restaurant(
-      id: map['id'],
-      name: map['name'],
-      price: map['price'],
-      distance: map['distance'],
-      hours: map['hours'],
+      id: map['id'] as int?,
+      name: map['name'] as String,
+      price: map['price'] as String,
+      distance: (map['distance'] as num).toDouble(),
+      hours: map['hours'] as String,
     );
   }
 }

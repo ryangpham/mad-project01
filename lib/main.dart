@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_screen.dart';
 
 void main() {
   runApp(const PantherBitesApp());
@@ -18,7 +18,7 @@ class PantherBitesApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF0039A6), // GSU blue
       ),
-      home: const HomeScreen(),
+      home: const MainNavigationScreen(),
     );
   }
 }
