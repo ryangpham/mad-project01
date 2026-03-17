@@ -4,12 +4,16 @@ class FavoriteCard extends StatelessWidget {
   final String name;
   final String price;
   final String distance;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
 
   const FavoriteCard({
     super.key,
     required this.name,
     required this.price,
     required this.distance,
+    required this.onTap,
+    required this.onRemove,
   });
 
   @override
@@ -45,17 +49,10 @@ class FavoriteCard extends StatelessWidget {
 
           IconButton(
             icon: const Icon(Icons.arrow_forward_ios, size: 16),
-            onPressed: () {
-              // TODO: Navigate to details screen
-            },
+            onPressed: onTap,
           ),
 
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              // TODO: Remove from favorites (SQFlite)
-            },
-          ),
+          IconButton(icon: const Icon(Icons.close), onPressed: onRemove),
         ],
       ),
     );

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import '../models/meal.dart';
 import '../models/restaurant.dart';
@@ -31,15 +33,36 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final databasesPath = await getDatabasesPath();
+    final dbFactory = _getDatabaseFactory();
+    final databasesPath = await dbFactory.getDatabasesPath();
     final path = join(databasesPath, _databaseName);
 
-    return openDatabase(
+    return dbFactory.openDatabase(
       path,
-      version: _databaseVersion,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      options: OpenDatabaseOptions(
+        version: _databaseVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      ),
     );
+  }
+
+  DatabaseFactory _getDatabaseFactory() {
+    if (kIsWeb) {
+      return databaseFactoryFfiWeb;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+        sqfliteFfiInit();
+        return databaseFactoryFfi;
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return databaseFactory;
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {

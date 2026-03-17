@@ -4,12 +4,14 @@ class MealCard extends StatelessWidget {
   final String name;
   final double price;
   final String date;
+  final VoidCallback onRemove;
 
   const MealCard({
     super.key,
     required this.name,
     required this.price,
     required this.date,
+    required this.onRemove,
   });
 
   @override
@@ -33,6 +35,7 @@ class MealCard extends StatelessWidget {
             '\$${price.toStringAsFixed(2)} • $date',
             style: TextStyle(color: Colors.grey.shade600),
           ),
+          IconButton(icon: const Icon(Icons.close), onPressed: onRemove),
         ],
       ),
     );

@@ -14,7 +14,7 @@ class BudgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double progress = spent / budget;
+    final progress = budget <= 0 ? 0.0 : (spent / budget).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(16),
