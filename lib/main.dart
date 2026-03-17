@@ -13,7 +13,11 @@ class PantherBitesApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PantherBites',
-      theme: ThemeData(useMaterial3: true),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: const Color(0xFF0039A6), // GSU blue
+      ),
       home: const HomeScreen(),
     );
   }
