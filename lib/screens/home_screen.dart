@@ -62,9 +62,7 @@ class HomeScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            RestaurantDetailsScreen(restau
-                            
-                            rant: restaurant),
+                            RestaurantDetailsScreen(restaurant: restaurant),
                       ),
                     );
                   },
