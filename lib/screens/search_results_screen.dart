@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/restaurant.dart';
+
+import '../data/restaurant_seed_data.dart';
+import '../widgets/restaurant_card.dart';
 import 'restaurant_details_screen.dart';
 
 class SearchResultsScreen extends StatelessWidget {
@@ -16,53 +18,36 @@ class SearchResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allRestaurants = [
-      Restaurant(
-        name: "Krispy Krunchy Chicken",
-        price: "\$",
-        distance: 0.1,
-        hours: "Open until 5PM",
-      ),
-      Restaurant(
-        name: "Gotta Eat ATL",
-        price: "\$",
-        distance: 0.2,
-        hours: "Open until 8PM",
-      ),
-      Restaurant(
-        name: "Chick-fil-A",
-        price: "\$\$",
-        distance: 0.2,
-        hours: "Open until 9PM",
-      ),
-    ];
+    final normalizedQuery = query.trim().toLowerCase();
 
-    //logic for filter
-    final results = allRestaurants.where((r) {
-      final matchesQuery = r.name.toLowerCase().contains(query.toLowerCase());
+    final results = seededRestaurants.where((restaurant) {
+      final matchesQuery =
+          normalizedQuery.isEmpty ||
+          restaurant.name.toLowerCase().contains(normalizedQuery);
 
-      final matchesPrice = priceFilter.isEmpty || r.price == priceFilter;
+      final matchesPrice =
+          priceFilter.isEmpty || restaurant.price == priceFilter;
 
-      final matchesDistance = r.distance <= distanceFilter;
+      final matchesDistance = restaurant.distance <= distanceFilter;
 
       return matchesQuery && matchesPrice && matchesDistance;
     }).toList();
 
+    final title = query.trim().isEmpty
+        ? 'Filtered Restaurants'
+        : 'Results for "${query.trim()}"';
+
     return Scaffold(
-      appBar: AppBar(title: Text("Results for \"$query\"")), //note this doesnt display $$$
+      appBar: AppBar(title: Text(title)),
       body: results.isEmpty
-          ? const Center(child: Text("No restaurants found"))
+          ? const Center(child: Text('No restaurants found'))
           : ListView.builder(
               itemCount: results.length,
               itemBuilder: (context, index) {
                 final restaurant = results[index];
 
-                return ListTile(
-                  leading: const Icon(Icons.restaurant),
-                  title: Text(restaurant.name),
-                  subtitle: Text(
-                    "${restaurant.price} • ${restaurant.distance} mi",
-                  ),
+                return RestaurantCard(
+                  restaurant: restaurant,
                   onTap: () {
                     Navigator.push(
                       context,
