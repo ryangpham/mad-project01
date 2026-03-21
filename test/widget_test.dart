@@ -5,13 +5,21 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pantherbites/main.dart';
 
 void main() {
-  testWidgets('App shows navigation tabs', (WidgetTester tester) async {
+  testWidgets('App shows splash then navigation tabs', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const PantherBitesApp());
+
+    expect(find.byType(Image), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
 
     expect(find.text('PantherBites'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
