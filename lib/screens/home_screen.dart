@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../data/restaurant_seed_data.dart';
+import '../models/matcher_input.dart';
 import '../models/restaurant.dart';
 import '../services/preferences_service.dart';
 import '../widgets/restaurant_card.dart';
+import 'ai_matcher_screen.dart';
 import 'restaurant_details_screen.dart';
 import 'search_results_screen.dart';
 
@@ -66,6 +68,156 @@ class _HomeScreenState extends State<HomeScreen> {
           distanceFilter: _selectedDistance,
         ),
       ),
+    );
+  }
+
+  String _moodLabel(UserMood mood) {
+    switch (mood) {
+      case UserMood.stressed:
+        return 'Stressed';
+      case UserMood.focused:
+        return 'Focused';
+      case UserMood.social:
+        return 'Social';
+      case UserMood.adventurous:
+        return 'Adventurous';
+      case UserMood.comfort:
+        return 'Need Comfort';
+    }
+  }
+
+  Future<void> _showMatcherInputSheet() async {
+    UserMood selectedMood = UserMood.stressed;
+    bool strictBudget = true;
+    bool inRush = false;
+    bool hasNextClass = true;
+    double minutesUntilClass = 60;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'AI Meal Matcher',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('How are you feeling?'),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: UserMood.values.map((mood) {
+                      return ChoiceChip(
+                        label: Text(_moodLabel(mood)),
+                        selected: selectedMood == mood,
+                        onSelected: (_) {
+                          setModalState(() {
+                            selectedMood = mood;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Strict budget mode'),
+                    value: strictBudget,
+                    onChanged: (value) {
+                      setModalState(() {
+                        strictBudget = value;
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('I am in a rush'),
+                    value: inRush,
+                    onChanged: (value) {
+                      setModalState(() {
+                        inRush = value;
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Use next class timing'),
+                    value: hasNextClass,
+                    onChanged: (value) {
+                      setModalState(() {
+                        hasNextClass = value;
+                      });
+                    },
+                  ),
+                  if (hasNextClass)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Next class in ${minutesUntilClass.round()} min'),
+                        Slider(
+                          value: minutesUntilClass,
+                          min: 15,
+                          max: 180,
+                          divisions: 33,
+                          onChanged: (value) {
+                            setModalState(() {
+                              minutesUntilClass = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        final nextClassStart = hasNextClass
+                            ? DateTime.now().add(
+                                Duration(minutes: minutesUntilClass.round()),
+                              )
+                            : null;
+
+                        final input = MatcherInput(
+                          mood: selectedMood,
+                          strictBudget: strictBudget,
+                          inRush: inRush,
+                          nextClassStart: nextClassStart,
+                        );
+
+                        Navigator.pop(sheetContext);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AiMatcherScreen(initialInput: input),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text('Get Recommendations'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -180,6 +332,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('PantherBites')),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showMatcherInputSheet,
+        icon: const Icon(Icons.auto_awesome),
+        label: const Text('AI Match'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

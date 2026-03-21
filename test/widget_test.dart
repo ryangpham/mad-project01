@@ -15,7 +15,6 @@ void main() {
 
     expect(find.text('PantherBites'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Matcher'), findsOneWidget);
     expect(find.text('Favorites'), findsOneWidget);
     expect(find.text('Budget'), findsOneWidget);
   });

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'ai_matcher_screen.dart';
 import 'budget_screen.dart';
 import 'favorites_screen.dart';
 import 'home_screen.dart';
@@ -17,7 +16,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   static const List<Widget> _pages = [
     HomeScreen(),
-    AiMatcherScreen(),
     FavoritesScreen(),
     BudgetScreen(),
   ];
@@ -27,7 +25,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -36,10 +33,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.auto_awesome),
-            label: 'Matcher',
-          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
             label: 'Favorites',

@@ -8,7 +8,9 @@ import '../services/meal_matcher_service.dart';
 import '../services/preferences_service.dart';
 
 class AiMatcherScreen extends StatefulWidget {
-  const AiMatcherScreen({super.key});
+  final MatcherInput initialInput;
+
+  const AiMatcherScreen({super.key, required this.initialInput});
 
   @override
   State<AiMatcherScreen> createState() => _AiMatcherScreenState();
@@ -18,12 +20,6 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
   final MealMatcherService _matcher = MealMatcherService.instance;
   final PreferencesService _prefs = PreferencesService.instance;
 
-  UserMood _mood = UserMood.stressed;
-  bool _strictBudget = true;
-  bool _inRush = false;
-  bool _hasNextClass = true;
-  double _minutesUntilClass = 60;
-
   bool _loading = true;
   List<MatchResult> _results = const [];
 
@@ -31,13 +27,6 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
   void initState() {
     super.initState();
     _runMatcher();
-  }
-
-  DateTime? get _nextClassStart {
-    if (!_hasNextClass) {
-      return null;
-    }
-    return DateTime.now().add(Duration(minutes: _minutesUntilClass.round()));
   }
 
   Future<List<Restaurant>> _candidateRestaurants() async {
@@ -64,16 +53,9 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     });
 
     final candidates = await _candidateRestaurants();
-    final input = MatcherInput(
-      mood: _mood,
-      strictBudget: _strictBudget,
-      inRush: _inRush,
-      nextClassStart: _nextClassStart,
-    );
-
     final ranked = await _matcher.rankRestaurants(
       candidates: candidates,
-      input: input,
+      input: widget.initialInput,
     );
 
     if (!mounted) {
@@ -116,7 +98,12 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     return 'Low confidence';
   }
 
-  Widget _buildControls() {
+  Widget _buildInputSummary() {
+    final input = widget.initialInput;
+    final nextClassMinutes = input.nextClassStart
+        ?.difference(DateTime.now())
+        .inMinutes;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -126,80 +113,14 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'How are you feeling?',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          Text('Mood: ${_moodLabel(input.mood)}'),
+          Text('Budget mode: ${input.strictBudget ? 'Strict' : 'Flexible'}'),
+          Text('Rush: ${input.inRush ? 'Yes' : 'No'}'),
+          Text(
+            nextClassMinutes == null
+                ? 'Next class: Not set'
+                : 'Next class in: ${nextClassMinutes.clamp(0, 999)} min',
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: UserMood.values.map((mood) {
-              return ChoiceChip(
-                label: Text(_moodLabel(mood)),
-                selected: _mood == mood,
-                onSelected: (_) {
-                  setState(() {
-                    _mood = mood;
-                  });
-                  _runMatcher();
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Strict budget mode'),
-            value: _strictBudget,
-            onChanged: (value) {
-              setState(() {
-                _strictBudget = value;
-              });
-              _runMatcher();
-            },
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('I am in a rush'),
-            value: _inRush,
-            onChanged: (value) {
-              setState(() {
-                _inRush = value;
-              });
-              _runMatcher();
-            },
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Use next class timing'),
-            value: _hasNextClass,
-            onChanged: (value) {
-              setState(() {
-                _hasNextClass = value;
-              });
-              _runMatcher();
-            },
-          ),
-          if (_hasNextClass)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Next class in ${_minutesUntilClass.round()} min'),
-                Slider(
-                  value: _minutesUntilClass,
-                  min: 15,
-                  max: 180,
-                  divisions: 33,
-                  onChanged: (value) {
-                    setState(() {
-                      _minutesUntilClass = value;
-                    });
-                  },
-                  onChangeEnd: (_) => _runMatcher(),
-                ),
-              ],
-            ),
         ],
       ),
     );
@@ -268,7 +189,7 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
         child: ListView(
           padding: const EdgeInsets.all(12),
           children: [
-            _buildControls(),
+            _buildInputSummary(),
             const SizedBox(height: 10),
             if (_loading)
               const Padding(
