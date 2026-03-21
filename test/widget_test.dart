@@ -10,9 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pantherbites/main.dart';
 
 void main() {
-  testWidgets('App shows home screen placeholder', (WidgetTester tester) async {
+  testWidgets('App shows navigation tabs', (WidgetTester tester) async {
     await tester.pumpWidget(const PantherBitesApp());
 
-    expect(find.text('Home Screen'), findsOneWidget);
+    expect(find.text('PantherBites'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Matcher'), findsOneWidget);
+    expect(find.text('Favorites'), findsOneWidget);
+    expect(find.text('Budget'), findsOneWidget);
   });
 }
