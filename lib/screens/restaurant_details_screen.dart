@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/restaurant_seed_data.dart';
 import '../models/restaurant.dart';
 import '../services/database_helper.dart';
 
@@ -78,6 +79,8 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final menuItems = getSeededMenuForRestaurant(widget.restaurant.name);
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.restaurant.name)),
       body: FutureBuilder<void>(
@@ -95,8 +98,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
           return Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: ListView(
               children: [
                 const Icon(Icons.restaurant, size: 80),
                 const SizedBox(height: 20),
@@ -112,12 +114,37 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 Text("Distance: ${widget.restaurant.distance} miles"),
                 Text("Hours: ${widget.restaurant.hours}"),
                 const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _isAddingFavorite ? null : _addToFavorites,
-                  child: Text(
-                    _isAddingFavorite ? 'Adding...' : 'Add to Favorites',
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton(
+                    onPressed: _isAddingFavorite ? null : _addToFavorites,
+                    child: Text(
+                      _isAddingFavorite ? 'Adding...' : 'Add to Favorites',
+                    ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Menu Items',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                if (menuItems.isEmpty)
+                  const Text('No menu items available for this restaurant.')
+                else
+                  ...menuItems.map(
+                    (item) => Card(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: ListTile(
+                        title: Text(item.name),
+                        subtitle: Text(item.category),
+                        trailing: Text(
+                          '\$${item.price.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
