@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/restaurant_seed_data.dart';
+import '../models/meal.dart';
 import '../models/restaurant.dart';
 import '../services/database_helper.dart';
 
@@ -18,6 +19,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   final DatabaseHelper _db = DatabaseHelper.instance;
   late final Future<void> _databaseReady;
   bool _isUpdatingFavorite = false;
+  bool _isLoggingMeal = false;
   bool _isFavorite = false;
   List<int> _favoriteIds = const [];
 
@@ -147,6 +149,44 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     }
   }
 
+  Future<void> _logMealFromMenuItem(SeedMenuItem item) async {
+    if (_isLoggingMeal) {
+      return;
+    }
+
+    setState(() {
+      _isLoggingMeal = true;
+    });
+
+    try {
+      await _db.insertMeal(
+        Meal(
+          mealName: item.name,
+          restaurantName: widget.restaurant.name,
+          price: item.price,
+          date: DateTime.now().toIso8601String(),
+        ),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logged ${item.name} to your budget.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingMeal = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final menuItems = getSeededMenuForRestaurant(widget.restaurant.name);
@@ -208,8 +248,14 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     (item) => Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
+                        enabled: !_isLoggingMeal,
+                        onTap: () => _logMealFromMenuItem(item),
                         title: Text(item.name),
-                        subtitle: Text(item.category),
+                        subtitle: Text(
+                          _isLoggingMeal
+                              ? '${item.category} · Logging...'
+                              : '${item.category} · Tap to log meal',
+                        ),
                         trailing: Text(
                           '\$${item.price.toStringAsFixed(2)}',
                           style: const TextStyle(fontWeight: FontWeight.w600),

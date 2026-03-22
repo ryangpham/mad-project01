@@ -16,14 +16,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   final DatabaseHelper _db = DatabaseHelper.instance;
   final PreferencesService _prefs = PreferencesService.instance;
 
-  Future<List<Meal>>? _mealsFuture;
   double _weeklyBudget = 100;
 
   @override
   void initState() {
     super.initState();
     _loadBudget();
-    _refreshMeals();
   }
 
   Future<void> _loadBudget() async {
@@ -34,12 +32,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
     setState(() {
       _weeklyBudget = savedBudget ?? 100;
-    });
-  }
-
-  void _refreshMeals() {
-    setState(() {
-      _mealsFuture = _db.getMeals();
     });
   }
 
@@ -167,7 +159,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 if (dialogContext.mounted) {
                   Navigator.pop(dialogContext);
                 }
-                _refreshMeals();
               },
               child: const Text('Add'),
             ),
@@ -179,10 +170,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   Future<void> _removeMeal(int id) async {
     await _db.deleteMeal(id);
-    if (!mounted) {
-      return;
-    }
-    _refreshMeals();
   }
 
   @override
@@ -203,59 +190,63 @@ class _BudgetScreenState extends State<BudgetScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(12),
-        child: FutureBuilder<List<Meal>>(
-          future: _mealsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        child: ValueListenableBuilder<int>(
+          valueListenable: _db.mealsRevision,
+          builder: (context, revision, child) => FutureBuilder<List<Meal>>(
+            future: _db.getMeals(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            final meals = snapshot.data ?? [];
-            final spent = meals.fold<double>(
-              0,
-              (sum, meal) => sum + meal.price,
-            );
-            final remaining = _weeklyBudget - spent;
+              final meals = snapshot.data ?? [];
+              final spent = meals.fold<double>(
+                0,
+                (sum, meal) => sum + meal.price,
+              );
+              final remaining = _weeklyBudget - spent;
 
-            return Column(
-              children: [
-                BudgetCard(
-                  budget: _weeklyBudget,
-                  spent: spent,
-                  remaining: remaining,
-                ),
-                const SizedBox(height: 20),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "LOGGED MEALS",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+              return Column(
+                children: [
+                  BudgetCard(
+                    budget: _weeklyBudget,
+                    spent: spent,
+                    remaining: remaining,
                   ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: meals.isEmpty
-                      ? const Center(child: Text('No meals logged yet.'))
-                      : ListView.builder(
-                          itemCount: meals.length,
-                          itemBuilder: (context, index) {
-                            final meal = meals[index];
-                            return MealCard(
-                              name: '${meal.mealName} (${meal.restaurantName})',
-                              price: meal.price,
-                              date: _formatDate(meal.date),
-                              onRemove: () {
-                                if (meal.id != null) {
-                                  _removeMeal(meal.id!);
-                                }
-                              },
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
+                  const SizedBox(height: 20),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "LOGGED MEALS",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: meals.isEmpty
+                        ? const Center(child: Text('No meals logged yet.'))
+                        : ListView.builder(
+                            itemCount: meals.length,
+                            itemBuilder: (context, index) {
+                              final meal = meals[index];
+                              return MealCard(
+                                name:
+                                    '${meal.mealName} (${meal.restaurantName})',
+                                price: meal.price,
+                                date: _formatDate(meal.date),
+                                onRemove: () {
+                                  if (meal.id != null) {
+                                    _removeMeal(meal.id!);
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

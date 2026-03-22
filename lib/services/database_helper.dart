@@ -17,6 +17,8 @@ class DatabaseHelper {
   static const String mealsTable = 'meals';
   static const String favoritesTable = 'favorites';
 
+  final ValueNotifier<int> mealsRevision = ValueNotifier<int>(0);
+
   Database? _database;
 
   Future<Database> get database async {
@@ -91,7 +93,9 @@ class DatabaseHelper {
 
   Future<int> insertMeal(Meal meal) async {
     final db = await database;
-    return db.insert(mealsTable, meal.toMap());
+    final id = await db.insert(mealsTable, meal.toMap());
+    mealsRevision.value++;
+    return id;
   }
 
   Future<List<Meal>> getMeals() async {
@@ -103,17 +107,25 @@ class DatabaseHelper {
 
   Future<int> updateMeal(Meal meal) async {
     final db = await database;
-    return db.update(
+    final count = await db.update(
       mealsTable,
       meal.toMap(),
       where: 'id = ?',
       whereArgs: [meal.id],
     );
+    if (count > 0) {
+      mealsRevision.value++;
+    }
+    return count;
   }
 
   Future<int> deleteMeal(int id) async {
     final db = await database;
-    return db.delete(mealsTable, where: 'id = ?', whereArgs: [id]);
+    final count = await db.delete(mealsTable, where: 'id = ?', whereArgs: [id]);
+    if (count > 0) {
+      mealsRevision.value++;
+    }
+    return count;
   }
 
   Future<int> addFavorite(Restaurant restaurant) async {
