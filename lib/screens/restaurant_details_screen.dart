@@ -17,42 +17,107 @@ class RestaurantDetailsScreen extends StatefulWidget {
 class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   final DatabaseHelper _db = DatabaseHelper.instance;
   late final Future<void> _databaseReady;
-  bool _isAddingFavorite = false;
+  bool _isUpdatingFavorite = false;
+  bool _isFavorite = false;
+  List<int> _favoriteIds = const [];
 
   @override
   void initState() {
     super.initState();
-    _databaseReady = _db.initializeDatabase();
+    _databaseReady = _initialize();
   }
 
-  Future<void> _addToFavorites() async {
-    if (_isAddingFavorite) {
+  String get _restaurantKey => widget.restaurant.name.trim().toLowerCase();
+
+  Future<void> _initialize() async {
+    await _db.initializeDatabase();
+    await _syncFavoriteState();
+  }
+
+  Future<void> _syncFavoriteState() async {
+    final favorites = await _db.getFavorites();
+    final matchingIds = favorites
+        .where(
+          (favorite) => favorite.name.trim().toLowerCase() == _restaurantKey,
+        )
+        .map((favorite) => favorite.id)
+        .whereType<int>()
+        .toList();
+
+    if (!mounted) {
       return;
     }
 
     setState(() {
-      _isAddingFavorite = true;
+      _favoriteIds = matchingIds;
+      _isFavorite = matchingIds.isNotEmpty;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isUpdatingFavorite) {
+      return;
+    }
+
+    setState(() {
+      _isUpdatingFavorite = true;
     });
 
     try {
-      final existingFavorites = await _db.getFavorites();
-      final alreadyFavorited = existingFavorites.any(
-        (favorite) =>
-            favorite.name.trim().toLowerCase() ==
-            widget.restaurant.name.trim().toLowerCase(),
-      );
+      if (_isFavorite) {
+        var idsToRemove = _favoriteIds;
+        if (idsToRemove.isEmpty) {
+          final favorites = await _db.getFavorites();
+          idsToRemove = favorites
+              .where(
+                (favorite) =>
+                    favorite.name.trim().toLowerCase() == _restaurantKey,
+              )
+              .map((favorite) => favorite.id)
+              .whereType<int>()
+              .toList();
+        }
 
-      if (alreadyFavorited) {
+        for (final id in idsToRemove) {
+          await _db.removeFavorite(id);
+        }
+
         if (!mounted) {
           return;
         }
+
+        setState(() {
+          _isFavorite = false;
+          _favoriteIds = const [];
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Restaurant is already in favorites.')),
+          const SnackBar(content: Text('Removed from favorites.')),
         );
         return;
       }
 
-      await _db.addFavorite(
+      final existingFavorites = await _db.getFavorites();
+      final alreadyFavorited = existingFavorites
+          .where(
+            (favorite) => favorite.name.trim().toLowerCase() == _restaurantKey,
+          )
+          .map((favorite) => favorite.id)
+          .whereType<int>()
+          .toList();
+
+      if (alreadyFavorited.isNotEmpty) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _isFavorite = true;
+          _favoriteIds = alreadyFavorited;
+        });
+        return;
+      }
+
+      final insertedId = await _db.addFavorite(
         Restaurant(
           name: widget.restaurant.name,
           price: widget.restaurant.price,
@@ -65,13 +130,18 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         return;
       }
 
+      setState(() {
+        _isFavorite = true;
+        _favoriteIds = [insertedId];
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Added to favorites.')));
     } finally {
       if (mounted) {
         setState(() {
-          _isAddingFavorite = false;
+          _isUpdatingFavorite = false;
         });
       }
     }
@@ -117,9 +187,11 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: ElevatedButton(
-                    onPressed: _isAddingFavorite ? null : _addToFavorites,
+                    onPressed: _isUpdatingFavorite ? null : _toggleFavorite,
                     child: Text(
-                      _isAddingFavorite ? 'Adding...' : 'Add to Favorites',
+                      _isUpdatingFavorite
+                          ? 'Updating...'
+                          : (_isFavorite ? 'Favorited' : 'Add to Favorites'),
                     ),
                   ),
                 ),

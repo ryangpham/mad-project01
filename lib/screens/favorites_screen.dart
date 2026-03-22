@@ -166,8 +166,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               price: item.price,
                               distance:
                                   '${item.distance.toStringAsFixed(1)} mi',
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => RestaurantDetailsScreen(
@@ -175,6 +175,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     ),
                                   ),
                                 );
+                                if (!mounted) {
+                                  return;
+                                }
+                                _refreshFavorites();
                               },
                               onRemove: () {
                                 if (item.id != null) {
