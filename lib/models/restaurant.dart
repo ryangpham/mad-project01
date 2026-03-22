@@ -5,6 +5,7 @@ class Restaurant {
   final double distance;
   final String hours;
 
+  // Constructor for the restaurant
   Restaurant({
     this.id,
     required this.name,
@@ -13,6 +14,7 @@ class Restaurant {
     required this.hours,
   });
 
+  // Convert Restaurant object into a Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -23,6 +25,7 @@ class Restaurant {
     };
   }
 
+  // Create Restaurant object from Map
   factory Restaurant.fromMap(Map<String, dynamic> map) {
     return Restaurant(
       id: map['id'] as int?,

@@ -13,9 +13,13 @@ class BudgetScreen extends StatefulWidget {
 }
 
 class _BudgetScreenState extends State<BudgetScreen> {
+  //Database helper for CRUD operations
   final DatabaseHelper _db = DatabaseHelper.instance;
-  final PreferencesService _prefs = PreferencesService.instance;
 
+  //Preferences service for saving/loading budget
+  final PreferencesService _prefs = PreferencesService.instance;
+  
+  // Default weekly budget
   double _weeklyBudget = 100;
 
   @override
@@ -24,6 +28,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     _loadBudget();
   }
 
+  //Loads saved budget from preferences
   Future<void> _loadBudget() async {
     final savedBudget = await _prefs.getBudget();
     if (!mounted) {
@@ -35,6 +40,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     });
   }
 
+  // Formats ISO date into MM/DD
   String _formatDate(String rawDate) {
     final parsed = DateTime.tryParse(rawDate);
     if (parsed == null) {
@@ -44,6 +50,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return '${parsed.month}/${parsed.day}';
   }
 
+  // Opens dialog to set the desired weekly budget
   Future<void> _showSetBudgetDialog() async {
     final controller = TextEditingController(
       text: _weeklyBudget.toStringAsFixed(2),
@@ -59,6 +66,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(prefixText: '\$'),
           ),
+
+          // Save or cancel actions
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -89,6 +98,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
+  // Opens dialog to add a new meal entry
   Future<void> _showAddMealDialog() async {
     final mealNameController = TextEditingController();
     final restaurantController = TextEditingController();
@@ -137,12 +147,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 final restaurantName = restaurantController.text.trim();
                 final price = double.tryParse(priceController.text.trim());
 
+                // Validating inputs
                 if (mealName.isEmpty ||
                     restaurantName.isEmpty ||
                     price == null) {
                   return;
                 }
 
+                // Inserts into database
                 await _db.insertMeal(
                   Meal(
                     mealName: mealName,
@@ -168,6 +180,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
+  // Deletes meal from the database
   Future<void> _removeMeal(int id) async {
     await _db.deleteMeal(id);
   }

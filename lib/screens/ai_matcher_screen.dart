@@ -20,15 +20,19 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
   final MealMatcherService _matcher = MealMatcherService.instance;
   final PreferencesService _prefs = PreferencesService.instance;
 
+  // Loading state for UI
   bool _loading = true;
+
+  // Stores ranked results from AI matcher
   List<MatchResult> _results = const [];
 
   @override
   void initState() {
     super.initState();
-    _runMatcher();
+    _runMatcher();    // Run matching when screen loads
   }
 
+  // Filters restaurants based on user preferences
   Future<List<Restaurant>> _candidateRestaurants() async {
     final priceFilter = await _prefs.getPriceFilter() ?? '';
     final distanceFilter = await _prefs.getDistanceFilter() ?? 10;
@@ -40,6 +44,7 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
       return matchesPrice && matchesDistance;
     }).toList();
 
+    // If no matches found, return all restaurants
     if (filtered.isNotEmpty) {
       return filtered;
     }
@@ -47,11 +52,13 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     return seededRestaurants;
   }
 
+  // Runs the AI matching algorithm
   Future<void> _runMatcher() async {
     setState(() {
       _loading = true;
     });
 
+  // Ranks restaurants based on user input
     final candidates = await _candidateRestaurants();
     final ranked = await _matcher.rankRestaurants(
       candidates: candidates,
@@ -63,11 +70,12 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     }
 
     setState(() {
-      _results = ranked.take(3).toList();
+      _results = ranked.take(3).toList(); // Gives top 3 results
       _loading = false;
     });
   }
 
+  // Converts mood enum to readable text
   String _moodLabel(UserMood mood) {
     switch (mood) {
       case UserMood.stressed:
@@ -83,6 +91,7 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     }
   }
 
+  // Determines confidence level based on score differences
   String _confidenceLabel() {
     if (_results.length < 2) {
       return 'Medium confidence';
@@ -97,6 +106,8 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     }
     return 'Low confidence';
   }
+
+  
 
   Widget _buildInputSummary() {
     final input = widget.initialInput;
@@ -126,6 +137,7 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
     );
   }
 
+  // Builds UI card for each restaurant match
   Widget _buildMatchCard(MatchResult result, int rank) {
     final percentage = (result.score * 100).clamp(0, 100).round();
 
@@ -136,6 +148,7 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header row (rank + name + match %)
             Row(
               children: [
                 CircleAvatar(radius: 14, child: Text('$rank')),
@@ -149,6 +162,8 @@ class _AiMatcherScreenState extends State<AiMatcherScreen> {
                     ),
                   ),
                 ),
+
+                //Restraunt details
                 Text('$percentage% match'),
               ],
             ),
