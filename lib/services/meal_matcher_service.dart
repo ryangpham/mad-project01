@@ -8,8 +8,11 @@ import 'preferences_service.dart';
 class MealMatcherService {
   MealMatcherService._internal();
 
+  //Single global instance used across the app
   static final MealMatcherService instance = MealMatcherService._internal();
 
+  //Maps each user mood to descriptive tags
+  //These are used to match with restaurant tags
   static const Map<UserMood, List<String>> _moodTags = {
     UserMood.stressed: ['comfort', 'quick', 'familiar'],
     UserMood.focused: ['light', 'healthy', 'quiet'],
@@ -18,27 +21,32 @@ class MealMatcherService {
     UserMood.comfort: ['comfort', 'warm', 'classic'],
   };
 
+  //tags assigned to restaurants for the AI matching
   static const Map<String, List<String>> _restaurantTags = {
     'Krispy Krunchy Chicken': ['comfort', 'quick', 'familiar', 'shareable'],
     'Gotta Eat ATL': ['bold', 'new', 'spicy', 'lively'],
     'Chick-fil-A': ['quick', 'familiar', 'popular', 'classic'],
   };
 
+  // Estimated prep time for each restraurant, used for schedule scoring
   static const Map<String, int> _prepMinutes = {
     'Krispy Krunchy Chicken': 12,
     'Gotta Eat ATL': 18,
     'Chick-fil-A': 10,
   };
 
+  //estimated average meal price for budget scoring
   static const Map<String, double> _averageMealPrice = {
     'Krispy Krunchy Chicken': 8.5,
     'Gotta Eat ATL': 13.0,
     'Chick-fil-A': 11.0,
   };
 
+  //Database + preferences access
   final DatabaseHelper _db = DatabaseHelper.instance;
   final PreferencesService _prefs = PreferencesService.instance;
 
+  // Main AI ranking function
   Future<List<MatchResult>> rankRestaurants({
     required List<Restaurant> candidates,
     required MatcherInput input,
@@ -47,23 +55,28 @@ class MealMatcherService {
       return const [];
     }
 
+    //Gets user data for budget, past meals and favorites
     final budget = await _prefs.getBudget() ?? 100;
     final meals = await _db.getMeals();
     final favorites = await _db.getFavorites();
 
+    //Favorite names for matching
     final favoriteNames = favorites
         .map((favorite) => favorite.name.trim().toLowerCase())
         .toSet();
 
+    //Calculates how much left to spend
     final spent = meals.fold<double>(0, (sum, meal) => sum + meal.price);
     final remaining = (budget - spent).clamp(0, double.infinity).toDouble();
     final targetPerMeal = _estimateTargetPerMeal(remaining);
 
+    //tracks recently eaten restaurants to avoid repeats
     final recentRestaurantNames = _recentRestaurants(meals);
 
     final results = <MatchResult>[];
 
     for (final restaurant in candidates) {
+      //Individual scoring components
       final moodScore = _computeMoodScore(restaurant, input.mood);
       final budgetScore = _computeBudgetScore(
         restaurant: restaurant,
@@ -81,12 +94,14 @@ class MealMatcherService {
         recentRestaurantNames: recentRestaurantNames,
       );
 
+      //Weighted final score
       final score =
           (0.35 * moodScore) +
           (0.30 * budgetScore) +
           (0.25 * scheduleScore) +
           (0.10 * personalScore);
 
+      //Score result with breakdown and explanation
       results.add(
         MatchResult(
           restaurant: restaurant,

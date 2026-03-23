@@ -4,6 +4,8 @@ class MealCard extends StatelessWidget {
   final String name;
   final double price;
   final String date;
+
+  //removes meal callback
   final VoidCallback onRemove;
 
   const MealCard({
@@ -25,6 +27,7 @@ class MealCard extends StatelessWidget {
       ),
       child: Row(
         children: [
+          //Meal names + restaurant
           Expanded(
             child: Text(
               name,
@@ -32,9 +35,11 @@ class MealCard extends StatelessWidget {
             ),
           ),
           Text(
+            //Price and date info
             '\$${price.toStringAsFixed(2)} • $date',
             style: TextStyle(color: Colors.grey.shade600),
           ),
+          //Delete meal
           IconButton(icon: const Icon(Icons.close), onPressed: onRemove),
         ],
       ),

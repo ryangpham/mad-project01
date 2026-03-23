@@ -12,6 +12,7 @@ class SeedMenuItem {
   });
 }
 
+//Data for local restaurants.
 final List<Restaurant> seededRestaurants = [
   Restaurant(
     name: 'Krispy Krunchy Chicken',

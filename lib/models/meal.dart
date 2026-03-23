@@ -5,6 +5,8 @@ class Meal {
   final double price;
   final String date;
 
+
+  // Constructor for Meal object
   Meal({
     this.id,
     required this.mealName,
@@ -13,6 +15,7 @@ class Meal {
     required this.date,
   });
 
+  // Converts Meal object into a Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -23,6 +26,7 @@ class Meal {
     };
   }
 
+  // Factory constructor to create a Meal object from a Map
   factory Meal.fromMap(Map<String, dynamic> map) {
     return Meal(
       id: map['id'] as int?,
