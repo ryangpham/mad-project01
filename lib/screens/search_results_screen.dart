@@ -18,9 +18,12 @@ class SearchResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //Lets query use case sensitive comparison
     final normalizedQuery = query.trim().toLowerCase();
 
+    // Filters restaurants based on query and filters
     final results = seededRestaurants.where((restaurant) {
+      // Match if query is empty or restaurant name contains query
       final matchesQuery =
           normalizedQuery.isEmpty ||
           restaurant.name.toLowerCase().contains(normalizedQuery);
@@ -28,19 +31,25 @@ class SearchResultsScreen extends StatelessWidget {
       final matchesPrice =
           priceFilter.isEmpty || restaurant.price == priceFilter;
 
+      //Distance constraint
       final matchesDistance = restaurant.distance <= distanceFilter;
 
       return matchesQuery && matchesPrice && matchesDistance;
     }).toList();
 
+    //Dynamic title based on search input
     final title = query.trim().isEmpty
         ? 'Filtered Restaurants'
         : 'Results for "${query.trim()}"';
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
+
+      //Displays if no matches are found
       body: results.isEmpty
           ? const Center(child: Text('No restaurants found'))
+
+          //otherwise shows the list of results
           : ListView.builder(
               itemCount: results.length,
               itemBuilder: (context, index) {
@@ -48,6 +57,8 @@ class SearchResultsScreen extends StatelessWidget {
 
                 return RestaurantCard(
                   restaurant: restaurant,
+                  
+                  //nagivates to details screen when pressed
                   onTap: () {
                     Navigator.push(
                       context,
