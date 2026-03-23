@@ -12,8 +12,10 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  // Tracjs curren tab index
   int _currentIndex = 0;
 
+  //List of screens for bottom navigation
   static const List<Widget> _pages = [
     HomeScreen(),
     FavoritesScreen(),
@@ -22,6 +24,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // IndexedStack keeps state of each tab
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(

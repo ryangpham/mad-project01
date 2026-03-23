@@ -18,8 +18,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  // Preferences service for filters (price,distance)
   final PreferencesService _prefs = PreferencesService.instance;
 
+  //Currently selected filters
   String _selectedPrice = '';
   double _selectedDistance = 5;
 
@@ -31,10 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _searchController.dispose(); //Prevents memory leaks
     super.dispose();
   }
 
+  // Load saved filters from local preferences
   Future<void> _loadFilters() async {
     final price = await _prefs.getPriceFilter();
     final distance = await _prefs.getDistanceFilter();
@@ -49,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Apply filters to restaurant list
   List<Restaurant> _applyFilters(List<Restaurant> restaurants) {
     return restaurants.where((restaurant) {
       final matchesPrice =
@@ -58,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
   }
 
+  // Navigate to search result screen
   void _search() {
     Navigator.push(
       context,
@@ -71,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Converts mood enum to readable string
   String _moodLabel(UserMood mood) {
     switch (mood) {
       case UserMood.stressed:
@@ -86,8 +92,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  //Colllects AI matcher input from user
   Future<void> _showMatcherInputSheet() async {
     UserMood selectedMood = UserMood.stressed;
+    // Default selections
     bool strictBudget = true;
     bool inRush = false;
     bool hasNextClass = true;
@@ -97,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
+        // Allows updating UI inside inside model
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
@@ -117,6 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                   const Text('How are you feeling?'),
                   const SizedBox(height: 8),
+                  
+                  // Mood selection chips
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -133,6 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }).toList(),
                   ),
                   const SizedBox(height: 8),
+
+                  // Toggle options
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Strict budget mode'),
@@ -163,6 +176,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
+
+                  // Slider for next class timing
                   if (hasNextClass)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
+                    // Submit button
                     child: FilledButton.icon(
                       onPressed: () {
                         final nextClassStart = hasNextClass
@@ -200,6 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
 
                         Navigator.pop(sheetContext);
+
+                        // Navigate to AI matcher results screen
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -220,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
+  // opens filter dialog for prices and distances
   Future<void> _showFiltersDialog() async {
     String draftPrice = _selectedPrice;
     double draftDistance = _selectedDistance;
@@ -259,6 +277,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           });
                         },
                       ),
+
+                      //Price filter options
                       for (final price in [r'$', r'$$', r'$$$'])
                         ChoiceChip(
                           label: Text(price),
@@ -273,6 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text('Distance: ${draftDistance.toStringAsFixed(1)} mi'),
+
+                  // distance slider
                   Slider(
                     value: draftDistance,
                     min: 0.5,
@@ -298,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Text('Reset'),
                       ),
                       const SizedBox(width: 8),
+
+                      // Applying filters
                       FilledButton(
                         onPressed: () async {
                           await _prefs.savePriceFilter(draftPrice);

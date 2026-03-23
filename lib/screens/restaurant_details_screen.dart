@@ -7,7 +7,7 @@ import '../services/database_helper.dart';
 
 class RestaurantDetailsScreen extends StatefulWidget {
   final Restaurant restaurant;
-
+  // Restaurant passed from previous screen
   const RestaurantDetailsScreen({super.key, required this.restaurant});
 
   @override
@@ -17,9 +17,12 @@ class RestaurantDetailsScreen extends StatefulWidget {
 
 class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   final DatabaseHelper _db = DatabaseHelper.instance;
+  // makes sure database is ready before UI loads
   late final Future<void> _databaseReady;
   bool _isUpdatingFavorite = false;
   bool _isLoggingMeal = false;
+
+  //favorite state
   bool _isFavorite = false;
   List<int> _favoriteIds = const [];
 
@@ -29,13 +32,16 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     _databaseReady = _initialize();
   }
 
+// Normalize restaurant name for comparison
   String get _restaurantKey => widget.restaurant.name.trim().toLowerCase();
 
+  //Initialize database and sync favorite state
   Future<void> _initialize() async {
     await _db.initializeDatabase();
     await _syncFavoriteState();
   }
 
+  //Syncs the UI with database favorites
   Future<void> _syncFavoriteState() async {
     final favorites = await _db.getFavorites();
     final matchingIds = favorites
@@ -56,6 +62,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     });
   }
 
+  // add / remove restaurants from favorites
   Future<void> _toggleFavorite() async {
     if (_isUpdatingFavorite) {
       return;
@@ -119,6 +126,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
         return;
       }
 
+      // add to favorites
       final insertedId = await _db.addFavorite(
         Restaurant(
           name: widget.restaurant.name,
@@ -149,6 +157,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     }
   }
 
+  //Logs selected menu items as a meal in budget tracker
   Future<void> _logMealFromMenuItem(SeedMenuItem item) async {
     if (_isLoggingMeal) {
       return;
