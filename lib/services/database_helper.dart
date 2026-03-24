@@ -85,7 +85,7 @@ class DatabaseHelper {
       )
     ''');
 
-  //Favorites table of saved restaurants
+    //Favorites table of saved restaurants
     await db.execute('''
       CREATE TABLE $favoritesTable (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +97,7 @@ class DatabaseHelper {
     ''');
   }
 
-  //Handle database upgrades 
+  //Handle database upgrades
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
 
   //insert new meal into database
